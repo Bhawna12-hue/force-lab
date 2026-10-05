@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Effects of Force Lab</title>
+<style>
+:root{--bg:#f6f7fb;--c:#fff;--t:#1d2433;--m:#5b657a;--a:#3b6cf6;--ok:#13a06f;--b:#dde2ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151d;--c:#1b2030;--t:#eef1f8;--m:#9aa5bd;--b:#2c3550;--a:#7a9bff}}
+:root[data-theme="dark"]{--bg:#12151d;--c:#1b2030;--t:#eef1f8;--m:#9aa5bd;--b:#2c3550;--a:#7a9bff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.45 system-ui,sans-serif;padding:14px}
+.w{max-width:860px;margin:auto}h1{font-size:22px;margin:0 0 2px}p.s{color:var(--m);margin:0 0 12px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--b);background:var(--c);color:var(--t);padding:8px 12px;border-radius:20px;cursor:pointer;font-size:14px}
+.tabs button.on{background:var(--a);color:#fff;border-color:var(--a)}.tabs button.done::after{content:" ✔";color:var(--ok)}.tabs button.on.done::after{color:#fff}
+.step{font-weight:700;margin:0 0 8px}.step span{background:var(--a);color:#fff;border-radius:50%;display:inline-block;width:22px;height:22px;text-align:center;line-height:22px;font-size:13px;margin-right:6px}
+label.ck{display:inline-flex;gap:6px;margin:0 14px 6px 0;align-items:center}
+input[type=text]{width:100%;padding:8px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);margin:6px 0}
+.btn{border:0;background:var(--a);color:#fff;padding:9px 14px;border-radius:9px;cursor:pointer;font-size:14px;margin:3px 4px 3px 0}
+.btn.g{background:var(--bg);color:var(--t);border:1px solid var(--b)}.btn:disabled{opacity:.4;cursor:not-allowed}
+svg{width:100%;height:auto;background:linear-gradient(#dff0ff,#eef8ff 70%);border-radius:10px;display:block;border:1px solid var(--b)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) svg{background:linear-gradient(#22304d,#2a3a5c 70%)}}
+#obs{min-height:44px;margin-top:8px;font-weight:600}.tag{display:inline-block;background:var(--ok);color:#fff;border-radius:6px;padding:1px 8px;margin:2px 4px 2px 0;font-size:13px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}th,td{border:1px solid var(--b);padding:7px;text-align:left;vertical-align:top;font-size:14px}th{background:var(--bg)}
+textarea{width:100%;min-height:70px;padding:8px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);font:inherit}
+@media print{.tabs,.lab{display:none}body{background:#fff}}
+</style></head><body><div class="w">
+<h1>⚙️ Effects of Force Lab</h1>
+<p class="s">Predict → Investigate → Observe → Conclude. Pick an object, then work through the 3 steps.</p>
+<div class="lab"><div class="tabs" id="tabs"></div>
+<div class="card"><p class="step"><span>1</span>Predict: what will force change in the <b id="on"></b>?</p>
+<div id="pred"></div><input type="text" id="ptxt" placeholder="Explain your prediction (e.g. 'It will squash because I press it')">
+<button class="btn" id="lock">🔒 Lock my prediction</button></div>
+<div class="card"><p class="step"><span>2</span>Investigate: apply a force</p>
+<svg id="sv" viewBox="0 0 600 240"><rect x="0" y="190" width="600" height="50" fill="#b9a784" opacity=".55"/><g id="obj"></g><g id="arrow"></g></svg>
+<div style="margin-top:8px">Force strength: <input type="range" id="str" min="1" max="10" value="5"> <b id="sv2">5</b></div>
+<div id="acts"></div><button class="btn g" id="rst">↺ Reset object</button>
+<div id="obs">Lock your prediction to start.</div></div></div>
+<div class="card"><p class="step"><span>3</span>Worksheet &amp; conclusion</p>
+<div class="tw"><table><thead><tr><th>#</th><th>Object</th><th>My prediction (shape / speed / direction)</th><th>What happened? Effect of force</th><th>Match?</th></tr></thead><tbody id="tb"></tbody></table></div>
+<p><b>Conclusion – a force can change an object's:</b></p><textarea id="cn" placeholder="Write your conclusion here…"></textarea>
+<div id="concl" style="margin-top:8px;color:var(--m)"></div>
+<input type="text" id="nm" placeholder="Student name & class"><button class="btn" onclick="save()">💾 Save worksheet to my files</button> <span id="sm" style="color:var(--ok)"></span></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const OB=[
+{n:'Balloon',e:'🎈',sq:1,fr:.96,draw:()=>`<ellipse rx="34" ry="42" cy="-45" fill="#ef476f"/><path d="M0-3 q-6 14 4 28" stroke="#555" fill="none"/>`,acts:['push','squeeze']},
+{n:'Ball',e:'⚽',sq:.3,fr:.985,draw:()=>`<circle r="30" cy="-30" fill="#fff" stroke="#222" stroke-width="3"/><polygon points="0,-48 14,-38 9,-22 -9,-22 -14,-38" fill="#222"/>`,acts:['push','squeeze']},
+{n:'Ice cream stick',e:'🪵',bend:1,fr:.93,draw:b=>`<path d="M-70 -8 Q0 ${-8-b*60} 70 -8 L70 -22 Q0 ${-22-b*60} -70 -22Z" fill="#d9a35f" stroke="#a9742f" stroke-width="2"/>`,acts:['push','bend']},
+{n:'Clay',e:'🟠',sq:1,keep:1,fr:.8,draw:()=>`<ellipse rx="38" ry="30" cy="-30" fill="#e07a3f"/><ellipse rx="22" ry="9" cy="-42" fill="#f0a070" opacity=".6"/>`,acts:['push','squeeze']},
+{n:'Trolley bag',e:'🧳',fr:.97,draw:()=>`<rect x="-34" y="-84" width="68" height="84" rx="9" fill="#2a9d8f"/><rect x="-6" y="-120" width="12" height="38" fill="#444"/><circle cx="-22" cy="4" r="7" fill="#222"/><circle cx="22" cy="4" r="7" fill="#222"/>`,acts:['push']}];
+const AC={squeeze:{l:'🤏 Squeeze / press',kind:'shape'},bend:{l:'💪 Bend it',kind:'shape'}};
+let cur=0,S=[],o,raf;
+OB.forEach((b,i)=>S[i]={locked:false,pred:{shape:0,speed:0,dir:0},txt:'',eff:{shape:0,speed:0,dir:0},acts:[]});
+function tabs(){$('tabs').innerHTML=OB.map((b,i)=>`<button class="${i==cur?'on ':''}${S[i].acts.length?'done':''}" onclick="sel(${i})">${b.e} ${b.n}</button>`).join('')}
+function sel(i){cur=i;const s=S[i];$('on').textContent=OB[i].n;
+ $('pred').innerHTML=[['shape','Shape'],['speed','Speed'],['dir','Direction']].map(([k,l])=>`<label class="ck"><input type="checkbox" data-k="${k}" ${s.pred[k]?'checked':''} ${s.locked?'disabled':''}> ${l}</label>`).join('');
+ $('ptxt').value=s.txt;$('ptxt').disabled=s.locked;$('lock').disabled=s.locked;$('lock').textContent=s.locked?'✔ Prediction locked':'🔒 Lock my prediction';
+ reset();tabs();tbl();acts()}
+function acts(){const b=OB[cur],s=S[cur];let h='';
+ if(b.acts.includes('push'))h+=['→ Push right','← Push left','↑ Push up','↓ Push down','✋ Stop it'].map((t,i)=>`<button class="btn" ${s.locked?'':'disabled'} onclick="push(${i})">${t}</button>`).join('');
+ b.acts.filter(a=>AC[a]).forEach(a=>h+=`<button class="btn" ${s.locked?'':'disabled'} onclick="shape('${a}')">${AC[a].l}</button>`);
+ $('acts').innerHTML=h}
+$('lock').onclick=()=>{const s=S[cur];document.querySelectorAll('#pred input').forEach(c=>s.pred[c.dataset.k]=c.checked?1:0);s.txt=$('ptxt').value;s.locked=true;$('obs').textContent='Now apply a force and watch carefully!';sel(cur)};
+$('str').oninput=()=>$('sv2').textContent=$('str').value;
+function reset(){o={x:300,y:190,vx:0,vy:0,sq:0,bend:0,hold:0};S[cur].eff={shape:0,speed:0,dir:0};draw();loop();$('arrow').innerHTML='';if(S[cur].locked)$('obs').textContent='Reset. Try a force again!'}
+$('rst').onclick=()=>{S[cur].acts=[];reset();tabs();tbl()};
+function note(t,k){const s=S[cur];s.eff[k]=1;s.acts.push(t);report();tabs();tbl()}
+function report(){const e=S[cur].eff;$('obs').innerHTML='Observed: '+['shape','speed','dir'].filter(k=>e[k]).map(k=>`<span class="tag">${{shape:'Shape changed',speed:'Speed changed',dir:'Direction changed'}[k]}</span>`).join('')+'<br><small style="font-weight:400;color:var(--m)">Last: '+S[cur].acts.slice(-1)+'</small>'}
+function push(i){const s=+$('str').value,F=s*(OB[cur].n=='Balloon'?.5:1.1);let fx=0,fy=0,t=['Pushed right','Pushed left','Pushed up','Pushed down'][i];
+ if(i<4){fx=[F,-F,0,0][i];fy=[0,0,-F,F][i]}else{const sp=Math.hypot(o.vx,o.vy);if(sp<.3){$('obs').textContent='It is already at rest – nothing to stop!';return}fx=-o.vx*.9;fy=-o.vy*.9;t='Stopped it with your hand'}
+ const s0=Math.hypot(o.vx,o.vy),a0=Math.atan2(o.vy,o.vx);o.vx+=fx;o.vy+=fy;if(OB[cur].n!='Balloon'&&Math.abs(o.vy)>0&&i<4&&i>1)o.vy+=0;
+ const s1=Math.hypot(o.vx,o.vy),a1=Math.atan2(o.vy,o.vx);
+ let d=Math.abs(a1-a0);d=d>Math.PI?2*Math.PI-d:d;
+ if(s0<.3){note(t+' → it started moving (speed ↑)','speed')}
+ else{if(Math.abs(s1-s0)>.4)S[cur].eff.speed=1;if(d>.25&&s1>.3)S[cur].eff.dir=1;note(t+' while moving → '+(d>.25&&s1>.3?'direction changed':'speed changed'),Math.abs(s1-s0)>.4?'speed':'dir')}
+ $('arrow').innerHTML=`<text x="${o.x}" y="40" text-anchor="middle" font-size="26">${['➡️','⬅️','⬆️','⬇️','✋'][i]}</text>`;setTimeout(()=>$('arrow').innerHTML='',700)}
+function shape(a){const s=+$('str').value/10;o.hold=1;if(a=='bend')o.bend=s*.8;else o.sq=s;
+ note((a=='bend'?'Bent it':'Squeezed it')+' → shape changed'+(OB[cur].keep?' (and it stays changed)':OB[cur].sq<.5||a=='bend'?' (springs back when released)':' (returns when released)'),'shape');
+ setTimeout(()=>{o.hold=0},900)}
+function draw(){const b=OB[cur];const sx=1+o.sq*(b.n=='Ball'?.2:.5),sy=1-o.sq*(b.n=='Ball'?.2:.45);
+ $('obj').setAttribute('transform',`translate(${o.x},${o.y}) scale(${sx},${sy})`);$('obj').innerHTML=b.draw(o.bend)}
+function loop(){cancelAnimationFrame(raf);const b=OB[cur];(function f(){o.x+=o.vx;o.y+=o.vy;
+ if(b.n=='Balloon'){o.vy+=-.02+(o.y<190?.03:0)}else{ /* gravity & floor */ }
+ if(b.n!='Balloon'){o.y=Math.min(190,o.y)+0;if(o.y<190)o.vy+=.5;else{o.y=190;if(o.vy>0)o.vy=0}}
+ o.vx*=b.fr;o.vy*=(b.n=='Balloon'?b.fr:(o.y>=190?b.fr:.995));
+ if(Math.abs(o.vx)<.03)o.vx=0;
+ if(o.x<45){o.x=45;o.vx=Math.abs(o.vx)*.4}if(o.x>555){o.x=555;o.vx=-Math.abs(o.vx)*.4}
+ if(o.y<50){o.y=50;o.vy=Math.abs(o.vy)*.3}
+ if(!o.hold&&!b.keep){o.sq*=.88;o.bend*=.88}
+ draw();raf=requestAnimationFrame(f)})()}
+function pl(p){const a=[p.shape&&'Shape',p.speed&&'Speed',p.dir&&'Direction'].filter(Boolean);return a.length?a.join(', '):'—'}
+function tbl(){$('tb').innerHTML=OB.map((b,i)=>{const s=S[i],e=s.eff,done=s.acts.length;
+ const ob=done?[e.shape&&'Shape',e.speed&&'Speed',e.dir&&'Direction'].filter(Boolean).join(', ')||'No change':'<i style="color:var(--m)">not tested yet</i>';
+ const m=done&&s.locked?(['shape','speed','dir'].every(k=>!!s.pred[k]==!!e[k])?'✔ Yes':'✘ Partly'):'';
+ return `<tr><td>${i+1}</td><td>${b.e} ${b.n}</td><td>${s.locked?pl(s.pred)+(s.txt?'<br><small>'+s.txt.replace(/</g,'&lt;')+'</small>':''):''}</td><td>${ob}</td><td>${m}</td></tr>`}).join('');
+ const n=S.filter(s=>s.acts.length).length;$('concl').textContent=n==5?'🎉 All 5 tested! A force can change an object\'s shape, its speed (start, stop, faster, slower) and its direction. Write this in your own words above.':n+' of 5 objects tested.'}
+function save(){const esc=t=>String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const rows=OB.map((b,i)=>{const s=S[i],e=s.eff;const ob=s.acts.length?([e.shape&&'Shape',e.speed&&'Speed',e.dir&&'Direction'].filter(Boolean).join(', ')||'No change')+'<br><small>'+s.acts.map(esc).join('; ')+'</small>':'Not tested';
+return `<tr><td>${i+1}</td><td>${b.n}</td><td>${s.locked?pl(s.pred)+'<br><small>'+esc(s.txt)+'</small>':'-'}</td><td>${ob}</td></tr>`}).join('');
+const h=`<html><head><meta charset="utf-8"><style>body{font-family:Arial}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:6px;vertical-align:top}th{background:#e6ecff}</style></head><body><h2>Effects of Force - Worksheet</h2><p><b>Name/Class:</b> ${esc($('nm').value)}</p><table><tr><th>#</th><th>Object</th><th>My Prediction (shape / speed / direction)</th><th>What Happened? Effect of force</th></tr>${rows}</table><h3>Conclusion</h3><p>${esc($('cn').value).replace(/\n/g,'<br>')}</p></body></html>`;
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([h],{type:'application/msword'}));
+a.download='Force-Worksheet'+($('nm').value?'-'+$('nm').value.replace(/[^\w]+/g,'_'):'')+'.doc';document.body.appendChild(a);a.click();a.remove();$('sm').textContent='Saved! Check your Downloads folder.'}
+sel(0);
+</script></body></html>
